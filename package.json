@@ -1,0 +1,14 @@
+{
+  "name": "whot",
+  "version": "0.1.0",
+  "description": "Multiplayer Nigerian Whot card game: realtime rooms with Node.js, Socket.IO and Docker",
+  "type": "module",
+  "scripts": {
+    "test": "node test/engine.test.js"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Aphoe4x/whot.git"
+  }
+}

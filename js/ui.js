@@ -39,7 +39,7 @@ function cardFace(card) {
   return el;
 }
 
-function render(state, ctx) {
+export function render(state, ctx) {
   // scores
   els.scoreYou.textContent = state.scores[0];
   els.scoreFoe.textContent = state.scores[1];

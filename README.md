@@ -25,8 +25,8 @@ When the market runs out, everything under the call card is shuffled into a new 
 ## Phases
 
 1. **Rules + board**: pure rules engine, playable table against a simple AI. Shipped.
-2. **Multiplayer** (this): Node + Socket.IO realtime rooms with room codes, per-seat hidden hands, reconnect and carried scores. Shipped.
-3. **Ship**: single Docker container on Render, then a portfolio card.
+2. **Multiplayer**: Node + Socket.IO realtime rooms with room codes, per-seat hidden hands, reconnect and carried scores. Shipped.
+3. **Ship** (this): single Docker container on Render, then a portfolio card.
 
 ## Development
 
@@ -42,6 +42,17 @@ Two ways to play:
 - **GitHub Pages** (`https://aphoe4x.github.io/whot/`) serves the static single-player table against the AI. Online play needs the Node server.
 
 The engine (`js/engine.js`) is pure ESM with no DOM access, so the exact same rules run in the browser and on the server.
+
+## Docker
+
+The same game as one container, which is what Render runs in production:
+
+```bash
+docker build -t whot .
+docker run -p 3000:3000 whot   # http://localhost:3000
+```
+
+The image ships only the game surface and the server: `index.html`, `style.css`, `js/`, `server/`. Tests, docs and dependencies for tests never leave your machine.
 
 ## License
 

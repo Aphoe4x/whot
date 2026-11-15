@@ -146,6 +146,11 @@ export function addLog(events) {
   renderLog();
 }
 
+export function clearLog() {
+  logLines.length = 0;
+  renderLog();
+}
+
 export function toast(msg) {
   if (!msg) return;
   els.toast.textContent = msg;
@@ -193,16 +198,72 @@ export function hideModals() {
   els.toast.classList.add('hidden');
 }
 
+/* ---------- online lobby ---------- */
+
+export function showLobby(msg) {
+  els.lobbyModal.classList.remove('hidden');
+  els.lobbyChoice.classList.remove('hidden');
+  els.waiting.classList.add('hidden');
+  els.lobbyMsg.textContent = msg || '';
+}
+
+export function showWaiting(code) {
+  els.lobbyModal.classList.remove('hidden');
+  els.lobbyChoice.classList.add('hidden');
+  els.waiting.classList.remove('hidden');
+  els.waitCode.textContent = code;
+  els.lobbyMsg.textContent = '';
+}
+
+export function hideLobby() {
+  els.lobbyModal.classList.add('hidden');
+}
+
+export function lobbyError(msg) {
+  els.lobbyMsg.textContent = msg;
+}
+
+export function lobbyCode() {
+  return (els.joinCode.value || '').trim().toUpperCase();
+}
+
+export function lobbyName() {
+  return (els.joinName.value || '').trim().slice(0, 16) || 'Player';
+}
+
+export function setRoomCode(code) {
+  if (code) {
+    els.roomPill.classList.remove('hidden');
+    els.roomCodeTxt.textContent = code;
+  } else {
+    els.roomPill.classList.add('hidden');
+  }
+}
+
+export function setOnline(on) {
+  els.btnNew.textContent = on ? 'Leave room' : 'New game';
+}
+
 export function init(cb) {
   ['scoreYou', 'scoreFoe', 'foeName', 'foeCount', 'foeHand', 'think', 'marketCount', 'market',
    'discard', 'callPill', 'turnPill', 'log', 'prompt', 'myHand', 'suitModal', 'suitChoices',
    'roundModal', 'roundTitle', 'roundText', 'roundScores', 'btnNext', 'rulesModal', 'toast',
-   'btnRules', 'btnRulesClose', 'btnNew'].forEach(function (id) { els[id] = $(id); });
+   'btnRules', 'btnRulesClose', 'btnNew', 'lobbyModal', 'lobbyChoice', 'waiting', 'waitCode',
+   'btnCreate', 'btnJoin', 'btnLocal', 'btnCancelWait', 'joinCode', 'joinName', 'lobbyMsg',
+   'roomPill', 'roomCodeTxt'].forEach(function (id) { els[id] = $(id); });
 
   els.market.addEventListener('click', function () { cb.onDraw(); });
   els.btnNew.addEventListener('click', function () { cb.onNew(); });
   els.btnRules.addEventListener('click', function () { els.rulesModal.classList.remove('hidden'); });
   els.btnRulesClose.addEventListener('click', function () { els.rulesModal.classList.add('hidden'); });
+
+  els.btnCreate.addEventListener('click', function () { cb.onCreate(); });
+  els.btnJoin.addEventListener('click', function () { cb.onJoin(); });
+  els.joinCode.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') cb.onJoin();
+  });
+  els.btnLocal.addEventListener('click', function () { cb.onLocal(); });
+  els.btnCancelWait.addEventListener('click', function () { cb.onCancelWait(); });
 
   els.myHand.addEventListener('click', function (e) {
     const btn = e.target.closest('button.card');

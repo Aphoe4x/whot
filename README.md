@@ -24,17 +24,24 @@ When the market runs out, everything under the call card is shuffled into a new 
 
 ## Phases
 
-1. **Rules + board** (this): pure rules engine, playable table against a simple AI. `npm test`
-2. **Multiplayer**: Node + Socket.IO realtime rooms with room codes and reconnect
-3. **Ship**: single Docker container on Render, portfolio card
+1. **Rules + board**: pure rules engine, playable table against a simple AI. Shipped.
+2. **Multiplayer** (this): Node + Socket.IO realtime rooms with room codes, per-seat hidden hands, reconnect and carried scores. Shipped.
+3. **Ship**: single Docker container on Render, then a portfolio card.
 
 ## Development
 
 ```bash
-npm test        # engine test suite + fuzz games (no dependencies)
+npm install
+npm test        # engine suite + room/live-server suite (no test framework)
+npm start       # http://localhost:3000  (serves the game + realtime rooms)
 ```
 
-The engine (`js/engine.js`) is pure ESM with no DOM access, so the same rules run in the browser today and on the Node server in phase 2.
+Two ways to play:
+
+- **`npm start`** gives the full thing: open the URL in two windows (or share it with a friend), create a room, send the 6 character code. The server validates every move with the same engine the browser uses, so rules can never drift between client and server. Hands are hidden per seat: each player only ever receives their own cards plus counts.
+- **GitHub Pages** (`https://aphoe4x.github.io/whot/`) serves the static single-player table against the AI. Online play needs the Node server.
+
+The engine (`js/engine.js`) is pure ESM with no DOM access, so the exact same rules run in the browser and on the server.
 
 ## License
 

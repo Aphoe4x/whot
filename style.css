@@ -570,7 +570,7 @@ button.card.illegal {
 .field input:focus,
 .join-row input:focus { border-color: rgba(251, 191, 36, .7); }
 
-.join-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.join-row { display: flex; gap: 8px; margin-top: 14px; margin-bottom: 10px; }
 .join-row input {
   flex: 1;
   min-width: 0;

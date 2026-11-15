@@ -63,7 +63,18 @@ function reply(ack, payload) {
 export function startServer(opts) {
   opts = opts || {};
   const http = createServer(serveStatic);
-  const io = new Server(http, { serveClient: true });
+  // The GitHub Pages build loads Socket.IO from here, so its origin is
+  // allowed alongside local dev and this service itself.
+  const io = new Server(http, {
+    serveClient: true,
+    cors: {
+      origin: [
+        'https://aphoe4x.github.io',
+        'https://whot-okjn.onrender.com',
+        /^http:\/\/localhost:\d+$/,
+      ],
+    },
+  });
   const manager = createRoomManager({ rng: opts.rng });
   const seatSock = new Map(); // "CODE:seat" -> socket
 

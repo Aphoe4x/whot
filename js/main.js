@@ -203,7 +203,7 @@ function createRoom() {
     ui.setRoomCode(ack.code);
     ui.showWaiting(ack.code);
   }).catch(function () {
-    ui.lobbyError('Online play needs the server. Run npm start, then try again.');
+    ui.lobbyError('Could not reach the game server. Check your connection and try again.');
   });
 }
 
@@ -219,7 +219,7 @@ function joinRoom() {
     ui.setRoomCode(ack.code);
     // the server starts the game and pushes state to both seats
   }).catch(function () {
-    ui.lobbyError('Online play needs the server. Run npm start, then try again.');
+    ui.lobbyError('Could not reach the game server. Check your connection and try again.');
   });
 }
 

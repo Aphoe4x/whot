@@ -2,7 +2,7 @@
 
 Play **Nigerian Whot** in the browser. The classic 54 card game with Hold on, Pick two, Suspension, General market and the wild Whot card.
 
-**Live:** https://aphoe4x.github.io/whot/
+**Live:** https://aphoe4x.github.io/whot/ (single player + multiplayer via https://whot-okjn.onrender.com)
 
 ## The rules
 
@@ -26,7 +26,7 @@ When the market runs out, everything under the call card is shuffled into a new 
 
 1. **Rules + board**: pure rules engine, playable table against a simple AI. Shipped.
 2. **Multiplayer**: Node + Socket.IO realtime rooms with room codes, per-seat hidden hands, reconnect and carried scores. Shipped.
-3. **Ship** (this): single Docker container on Render, then a portfolio card.
+3. **Ship** (this): single Docker container on Render, then a portfolio card. Docker image shipped and deployed.
 
 ## Development
 
@@ -39,7 +39,7 @@ npm start       # http://localhost:3000  (serves the game + realtime rooms)
 Two ways to play:
 
 - **`npm start`** gives the full thing: open the URL in two windows (or share it with a friend), create a room, send the 6 character code. The server validates every move with the same engine the browser uses, so rules can never drift between client and server. Hands are hidden per seat: each player only ever receives their own cards plus counts.
-- **GitHub Pages** (`https://aphoe4x.github.io/whot/`) serves the static single-player table against the AI. Online play needs the Node server.
+- **GitHub Pages** (`https://aphoe4x.github.io/whot/`) serves the game as static files: single player against the AI works with no server at all, and multiplayer works too because the client falls back to the deployed Render server below.
 
 The engine (`js/engine.js`) is pure ESM with no DOM access, so the exact same rules run in the browser and on the server.
 

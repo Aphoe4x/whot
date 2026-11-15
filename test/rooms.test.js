@@ -147,6 +147,14 @@ console.log('live server');
     const leak2 = await fetch(url + '/test/engine.test.js');
     eq(leak2.status, 404, 'tests not served');
 
+    // CORS: the GitHub Pages build handshakes cross-origin, strangers do not.
+    const hs = '/socket.io/?EIO=4&transport=polling';
+    const pages = await fetch(url + hs, { headers: { Origin: 'https://aphoe4x.github.io' } });
+    eq(pages.headers.get('access-control-allow-origin'), 'https://aphoe4x.github.io',
+       'Pages origin allowed by CORS');
+    const stranger = await fetch(url + hs, { headers: { Origin: 'https://evil.example' } });
+    eq(stranger.headers.get('access-control-allow-origin'), null, 'unknown origin not allowed');
+
     const aState = once(a, 'state');
     const bState = once(b, 'state');
 

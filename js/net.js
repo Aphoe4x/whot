@@ -1,16 +1,33 @@
 // Realtime client. Loads the socket.io script the Node server serves and
-// wraps it in a small promise API. On static hosting there is no server:
-// createNet() rejects and the lobby explains itself.
+// wraps it in a small promise API. On static hosting (GitHub Pages) there is
+// no local server, so the client falls back to the deployed Render server
+// and multiplayer works from any origin. Only if both are unreachable does
+// createNet() reject and the lobby explains itself.
+const REMOTE = 'https://whot-okjn.onrender.com';
+
 export function createNet() {
   return new Promise(function (resolve, reject) {
-    const start = function () { resolve(wrap(window.io({ reconnection: true }))); };
-    if (window.io) return start();
-    const script = document.createElement('script');
-    script.src = '/socket.io/socket.io.js';
-    script.onload = start;
-    script.onerror = function () { reject(new Error('no server')); };
-    document.head.appendChild(script);
+    // Same origin first: works when the Node server or Docker container
+    // serves the page. On GitHub Pages that script 404s, so load the
+    // deployed Render server's client and connect to it cross-origin.
+    loadScript('/socket.io/socket.io.js', function () {
+      resolve(wrap(window.io({ reconnection: true })));
+    }, function () {
+      loadScript(REMOTE + '/socket.io/socket.io.js', function () {
+        resolve(wrap(window.io(REMOTE, { reconnection: true })));
+      }, function () {
+        reject(new Error('no server'));
+      });
+    });
   });
+}
+
+function loadScript(src, onload, onerror) {
+  const script = document.createElement('script');
+  script.src = src;
+  script.onload = onload;
+  script.onerror = onerror;
+  document.head.appendChild(script);
 }
 
 const TIMEOUT = 5000;
@@ -26,7 +43,7 @@ function wrap(socket) {
       const timer = setTimeout(function () {
         if (done) return;
         done = true;
-        resolve({ error: 'Server not reachable' });
+        resolve({ error: 'Server not reachable. Try again in a minute.' });
       }, TIMEOUT);
       socket.emit(event, payload, function (ack) {
         if (done) return;

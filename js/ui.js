@@ -184,6 +184,15 @@ export function showRound(state, onNext) {
   els.roundScores.innerHTML =
     '<div class="' + (youWon ? 'win' : '') + '"><span>You</span><b>' + state.scores[0] + '</b></div>' +
     '<div class="' + (!youWon ? 'win' : '') + '"><span>Opponent</span><b>' + state.scores[1] + '</b></div>';
+  const shareText = youWon
+    ? 'I just won a round of Nigerian Whot on start.ng. Can you beat me?'
+    : 'Nigerian Whot just beat me on start.ng. Can you do better?';
+  const shareLink = /start\.ng$/.test(location.hostname) ? location.href : 'https://naija-whot.start.ng/';
+  els.btnShare.onclick = function () {
+    const url = 'https://x.com/intent/post?text=' + encodeURIComponent(shareText) +
+      '&url=' + encodeURIComponent(shareLink);
+    window.open(url, '_blank', 'noopener');
+  };
   els.btnNext.onclick = function () {
     els.roundModal.classList.add('hidden');
     onNext();
@@ -247,7 +256,7 @@ export function setOnline(on) {
 export function init(cb) {
   ['scoreYou', 'scoreFoe', 'foeName', 'foeCount', 'foeHand', 'think', 'marketCount', 'market',
    'discard', 'callPill', 'turnPill', 'log', 'prompt', 'myHand', 'suitModal', 'suitChoices',
-   'roundModal', 'roundTitle', 'roundText', 'roundScores', 'btnNext', 'rulesModal', 'toast',
+   'roundModal', 'roundTitle', 'roundText', 'roundScores', 'btnNext', 'btnShare', 'rulesModal', 'toast',
    'btnRules', 'btnRulesClose', 'btnNew', 'lobbyModal', 'lobbyChoice', 'waiting', 'waitCode',
    'btnCreate', 'btnJoin', 'btnLocal', 'btnCancelWait', 'joinCode', 'joinName', 'lobbyMsg',
    'roomPill', 'roomCodeTxt'].forEach(function (id) { els[id] = $(id); });

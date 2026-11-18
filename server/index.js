@@ -63,13 +63,14 @@ function reply(ack, payload) {
 export function startServer(opts) {
   opts = opts || {};
   const http = createServer(serveStatic);
-  // The GitHub Pages build loads Socket.IO from here, so its origin is
-  // allowed alongside local dev and this service itself.
+  // The GitHub Pages build and the start.ng build load Socket.IO from here,
+  // so both origins are allowed alongside local dev and this service itself.
   const io = new Server(http, {
     serveClient: true,
     cors: {
       origin: [
         'https://aphoe4x.github.io',
+        'https://naija-whot.start.ng',
         'https://whot-okjn.onrender.com',
         /^http:\/\/localhost:\d+$/,
       ],

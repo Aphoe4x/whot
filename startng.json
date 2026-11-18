@@ -1,0 +1,24 @@
+{
+  "description": "Play Nigerian Whot in the browser. 54 cards, Hold on, Pick two, Suspension and the wild Whot 20, against a friend in a private room or the computer.",
+  "categories": ["board-and-card", "nigerian-themed", "with-friends", "five-minute-fun"],
+  "controls": [
+    "Click or tap a card in your hand to play it",
+    "Click the market pile to pick a card",
+    "Click Create room, then share the 6 letter code",
+    "Click Play vs computer for a game without a room"
+  ],
+  "howToPlay": [
+    "You and your opponent get 6 cards each.",
+    "Match the shape or the number on the call card.",
+    "Play a Whot 20 on anything and call the shape that comes next.",
+    "Answer Pick two with another 2, or pick the cards yourself.",
+    "Empty your hand first to win the round."
+  ],
+  "features": [
+    "Realtime rooms with a code",
+    "An AI opponent you can play offline",
+    "The full Whot rules engine",
+    "Built for phones as well as desktops",
+    "Free, no download"
+  ]
+}

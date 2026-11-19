@@ -8,7 +8,7 @@ const SETTINGS_KEY = 'whot.settings';
 let settings = loadSettings();
 
 function loadSettings() {
-  const fallback = { hints: true, rules: { exclude: [] } };
+  const fallback = { hints: true, rules: normaliseRules() };
   try {
     const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY));
     if (!raw) return fallback;

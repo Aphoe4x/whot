@@ -14,11 +14,49 @@ let net = null;
 let session = null; // {code, playerId} kept for reconnect + refresh resume
 let roundShown = false;
 
+/* ---------- local game: resume after a refresh ---------- */
+
+const LOCAL_KEY = 'whot.local';
+
+// The local state is written on every render, so refreshing mid-game picks
+// the game back up where it stopped instead of dealing a new one.
+function saveLocal() {
+  if (!state) return;
+  try { sessionStorage.setItem(LOCAL_KEY, JSON.stringify(state)); } catch { /* private mode */ }
+}
+
+function loadLocal() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(LOCAL_KEY) || '');
+    if (!saved || saved.phase !== 'playing' || !Array.isArray(saved.players)) return null;
+    if (!Array.isArray(saved.players[0].hand)) return null;
+    return saved;
+  } catch { return null; }
+}
+
+function restoreLocal() {
+  const saved = loadLocal();
+  if (!saved) return false;
+  state = saved;
+  mode = 'local';
+  view = null;
+  roundShown = false;
+  ui.setOnline(false);
+  ui.setRoomCode(null);
+  ui.hideLobby();
+  saveLocal();
+  maybeAI();
+  return true;
+}
+
 /* ---------- rendering ---------- */
 
 function renderAll() {
   if (mode === 'online') renderOnline();
-  else renderLocal();
+  else {
+    renderLocal();
+    saveLocal();
+  }
 }
 
 function renderLocal() {
@@ -316,6 +354,11 @@ async function boot() {
     onLocal: onLocal,
     onCancelWait: cancelWait,
   });
+  // A saved playing game resumes first: refresh continues where you stopped.
+  if (restoreLocal()) {
+    return;
+  }
+
   newGame();
 
   const saved = loadSession();

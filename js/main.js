@@ -1,7 +1,7 @@
 // Wires the engine, the AI, the table and the realtime client together.
 // Two modes share one table: "local" plays the computer (phase 1), "online"
 // plays a friend through the Node server (phase 2).
-import { createGame, applyAction } from './engine.js';
+import { createGame, applyAction, ruleText } from './engine.js';
 import { aiChoose } from './ai.js';
 import * as ui from './ui.js';
 import { createNet } from './net.js';
@@ -23,13 +23,13 @@ function renderAll() {
 
 function renderLocal() {
   const aiTurn = state.phase === 'playing' && state.players[state.turn].isAI;
-  ui.render(state, { aiTurn: aiTurn, busy: busy, onPay: onPay });
+  ui.render(state, { aiTurn: aiTurn, busy: busy, onPay: onPay, hints: ui.getSettings().hints });
 }
 
 function renderOnline() {
   if (!view) return;
   const mine = view.phase === 'playing' && view.turn === 0;
-  ui.render(view, { aiTurn: view.phase === 'playing' && !mine, busy: false, onPay: onPay });
+  ui.render(view, { aiTurn: view.phase === 'playing' && !mine, busy: false, onPay: onPay, hints: ui.getSettings().hints });
   if (view.phase === 'ended' && !roundShown) {
     roundShown = true;
     ui.showRound(view, function () {
@@ -80,16 +80,23 @@ function humanAct(action) {
 }
 
 function nextRound() {
-  state = createGame({ carryScores: state.scores });
+  state = createGame({ carryScores: state.scores, rules: state.rules });
   ui.addLog(['New round. Place your cards.']);
+  ui.setRulesPill(state.rules);
   ui.hideModals();
   maybeAI();
 }
 
 function newGame() {
-  state = createGame();
+  const settings = ui.getSettings();
+  state = createGame({ rules: settings.rules });
+  const lines = ['Fresh table. Good luck.'];
+  const rulesLine = ruleText(state.rules);
+  if (rulesLine) lines.push(rulesLine);
+  if (!settings.hints) lines.push('Hints are off, so every card looks the same.');
+  ui.addLog(lines);
+  ui.setRulesPill(state.rules);
   ui.hideModals();
-  ui.addLog(['Fresh table. Good luck.']);
   maybeAI();
 }
 
@@ -138,6 +145,7 @@ function onServerState(payload) {
   mode = 'online';
   ui.hideLobby();
   ui.setOnline(true);
+  ui.setRulesPill(next.rules || { exclude: [] });
   renderAll();
 }
 
@@ -195,7 +203,7 @@ function giveUpSession(msg) {
 
 function createRoom() {
   ensureNet().then(function (n) {
-    return n.create(ui.lobbyName());
+    return n.create(ui.lobbyName(), ui.getSettings().rules);
   }).then(function (ack) {
     if (!ack || ack.error) { ui.lobbyError((ack && ack.error) || 'Could not create a room'); return; }
     saveSession({ code: ack.code, playerId: ack.playerId });
@@ -278,7 +286,9 @@ function onPay() {
 
 function onNew() {
   if (mode === 'online' || session) { leaveRoom(); return; }
-  newGame();
+  // The panel is the table setup, so "New game" opens it with the saved
+  // rules already chosen.
+  ui.showLobby();
 }
 
 function onLocal() {
@@ -286,11 +296,6 @@ function onLocal() {
   clearSession();
   ui.setRoomCode(null);
   ui.setOnline(false);
-  if (mode === 'local') {
-    // Already sitting at a local table: keep the game, just close the lobby.
-    ui.hideLobby();
-    return;
-  }
   mode = 'local';
   view = null;
   roundShown = false;

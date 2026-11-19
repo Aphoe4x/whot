@@ -1,7 +1,7 @@
 // Phase 1 gate: engine tests. Run with `npm test`.
 import {
   SUITS, SUIT_NUMBERS, buildDeck, createGame, applyAction, legalCards,
-  handValue, topOf, shuffle,
+  handValue, topOf, shuffle, normaliseRules, ruleText, rulePillText, RULE_CARDS,
 } from '../js/engine.js';
 import { aiChoose } from '../js/ai.js';
 
@@ -48,6 +48,75 @@ console.log('deck composition');
   eq(deck.filter((c) => c.number === 20).length, 5, 'five Whot cards');
   const ids = new Set(deck.map((c) => c.id));
   eq(ids.size, 54, 'all card ids unique');
+
+  RULE_CARDS.forEach(function (r) {
+    ok(deck.some((c) => c.number === r.number), r.name + ' is in a full deck');
+  });
+  eq(normaliseRules({ exclude: [20, 20, 5] }).exclude.join(','), '5,20', 'duplicate rules collapse');
+}
+
+// ---------- 1b. house rules ----------
+
+console.log('house rules');
+{
+  const noWhot = buildDeck(mulberry32(1), { exclude: [20] });
+  eq(noWhot.length, 49, 'dropping Whot leaves 49 cards');
+  eq(noWhot.filter((c) => c.number === 20).length, 0, 'no Whot cards left');
+
+  const noFive = buildDeck(mulberry32(1), { exclude: [5] });
+  eq(noFive.length, 49, 'dropping 5s leaves 49 cards');
+  eq(noFive.filter((c) => c.number === 5).length, 0, 'no 5s left');
+
+  const st = createGame({ rng: mulberry32(3), rules: { exclude: [5, 20] } });
+  eq(st.rules.exclude.length, 2, 'game keeps its rules');
+  eq(totalCards(st), 44, 'deal conserves the 44 card deck');
+  const every = st.players[0].hand.concat(st.players[1].hand, st.market, st.pile);
+  ok(every.every((c) => c.number !== 5 && c.number !== 20), 'no 5s or Whot in play');
+
+  // Junk in the rule list is dropped rather than breaking the deal.
+  const junk = createGame({ rng: mulberry32(3), rules: { exclude: [5, 99, 'x'] } });
+  eq(junk.rules.exclude.join(','), '5', 'unknown rule numbers ignored');
+
+  // A game with no rules behaves exactly like before.
+  const plain = createGame({ rng: mulberry32(3) });
+  eq(plain.rules.exclude.length, 0, 'rules default to everything in play');
+  eq(totalCards(plain), 54, 'plain game still deals 54');
+
+  eq(ruleText({ exclude: [5, 20], defend: [2, 5] }), 'Left out: 5 Pick three, 20 Whot.', 'rule text lists the cards');
+  eq(ruleText({ defend: [] }), 'No defense on Pick two, Pick three.', 'rule text mentions no defense when off');
+  eq(ruleText({}), '', 'rule text is empty when nothing is left out');
+  eq(rulePillText({ exclude: [5, 20] }), 'No 5, no 20', 'pill text is short');
+  eq(rulePillText({ exclude: [] }), '', 'pill hidden when nothing is left out');
+}
+
+// ---------- 1c. defense on pick two and pick three ----------
+
+console.log('defense');
+{
+  eq(createGame({ rng: mulberry32(3) }).rules.defend.join(','), '2,5', 'defend is on for both by default');
+  eq(createGame({ rng: mulberry32(3), rules: { defend: [] } }).rules.defend.length, 0, 'defend can be switched off');
+  eq(normaliseRules({ defend: [5] }).defend.join(','), '5', 'unknown defend numbers are dropped');
+
+  // With defense off, the pick is paid, not defended.
+  const st = createGame({ rng: mulberry32(3), rules: { defend: [] } });
+  st.pending = { number: 2, amount: 2, chain: 1, player: 1 };
+  st.turn = 1;
+  ok(legalCards(st, 1).length === 0, 'nothing to defend with when defense is off');
+  const pay = applyAction(st, { type: 'pay' });
+  ok(pay.ok, 'paying works when defense is off');
+
+  // With defense on, defending still works, and only with the same number.
+  const st2 = createGame({ rng: mulberry32(3), rules: { defend: [2, 5] } });
+  if (!st2.players[1].hand.find(function (c) { return c.number === 2; })) {
+    st2.players[1].hand.push({ id: 'circles-2', suit: 'circles', number: 2 });
+  }
+  st2.pending = { number: 2, amount: 2, chain: 1, player: 1 };
+  st2.turn = 1;
+  ok(legalCards(st2, 1).length > 0, 'defensive cards are the 2s');
+  ok(legalCards(st2, 1).every(function (c) { return c.number === 2; }), 'defensive cards are the 2s only');
+  const two = st2.players[1].hand.find(function (c) { return c.number === 2; });
+  const defend = applyAction(st2, { type: 'play', cardId: two.id });
+  ok(defend.ok, 'defending works when defense is on: ' + (defend.reason || 'ok'));
 }
 
 // ---------- 2. deal and call card ----------

@@ -1,9 +1,26 @@
 // Rendering and input for the Whot table.
-import { SUITS, topOf, legalCards, SPECIAL_NAMES } from './engine.js';
+import { SUITS, topOf, legalCards, SPECIAL_NAMES, RULE_CARDS, DEFENDABLE, normaliseRules, rulePillText } from './engine.js';
 
 const $ = function (id) { return document.getElementById(id); };
 
 const els = {};
+const SETTINGS_KEY = 'whot.settings';
+let settings = loadSettings();
+
+function loadSettings() {
+  const fallback = { hints: true, rules: { exclude: [] } };
+  try {
+    const raw = JSON.parse(localStorage.getItem(SETTINGS_KEY));
+    if (!raw) return fallback;
+    return { hints: raw.hints !== false, rules: normaliseRules(raw.rules) };
+  } catch { return fallback; }
+}
+
+function saveSettings() {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); } catch { /* private mode */ }
+}
+
+export function getSettings() { return settings; }
 const TAG_TEXT = { 1: 'Hold on', 2: 'Pick two', 5: 'Pick three', 8: 'Suspend', 14: 'Gen. market' };
 const TAG_CLASS = { 1: 'gold', 2: 'hot', 5: 'hot', 8: '', 14: 'hot' };
 const SUIT_ORDER = { circles: 0, triangles: 1, crosses: 2, squares: 3, stars: 4, whot: 5 };
@@ -82,7 +99,9 @@ export function render(state, ctx) {
     els.turnPill.textContent = ctx.busy ? 'Opponent is thinking' : "Opponent's turn";
     els.turnPill.className = 'pill turn-foe';
   } else {
-    els.turnPill.textContent = state.pending ? 'Defend or pay' : 'Your turn';
+    els.turnPill.textContent = state.pending
+      ? (state.rules && state.rules.defend.indexOf(state.pending.number) !== -1 ? 'Defend or pay' : 'Pay')
+      : 'Your turn';
     els.turnPill.className = 'pill turn-your';
   }
 
@@ -90,10 +109,12 @@ export function render(state, ctx) {
   if (state.pending && state.pending.player === 0 && state.phase === 'playing') {
     els.prompt.classList.remove('hidden');
     const who = state.pending.number === 2 ? 'Pick two' : 'Pick three';
+    const canDefend = state.rules && state.rules.defend.indexOf(state.pending.number) !== -1;
     els.prompt.innerHTML =
-      '<span>' + state.players[1].name + ' played <b>' + who + '</b>. Defend with a ' +
-      state.pending.number + ' or pay ' + state.pending.amount + '.</span>' +
-      '<button class="btn" type="button" id="btnPay">Pay ' + state.pending.amount + '</button>';
+      '<span>' + state.players[1].name + ' played <b>' + who + '</b>.</span>' +
+      '<button class="btn" type="button" id="btnPay">' + (canDefend
+        ? 'Defend with a ' + state.pending.number + ' or pay ' + state.pending.amount
+        : 'Pay ' + state.pending.amount) + '</button>';
     const pay = $('btnPay');
     if (pay && ctx.onPay) pay.addEventListener('click', ctx.onPay);
   } else {
@@ -103,7 +124,10 @@ export function render(state, ctx) {
 
   // your hand
   const mine = state.players[0];
-  const legal = state.phase === 'playing' && humanActive ? legalCards(state, 0) : [];
+  // Strict difficulty: no card is marked, so the player works out the
+  // playable ones from the call card.
+  const hint = ctx.hints !== false;
+  const legal = hint && state.phase === 'playing' && humanActive ? legalCards(state, 0) : [];
   const legalIds = new Set(legal.map(function (c) { return c.id; }));
   const sorted = mine.hand.slice().sort(function (a, b) {
     return SUIT_ORDER[a.suit] - SUIT_ORDER[b.suit] || a.number - b.number;
@@ -113,14 +137,14 @@ export function render(state, ctx) {
   for (const card of sorted) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'card suit-' + card.suit + ' ' + (legalIds.has(card.id) ? 'legal' : 'illegal');
+    b.className = 'card suit-' + card.suit + (hint ? ' ' + (legalIds.has(card.id) ? 'legal' : 'illegal') : '');
     const special = card.number !== 20 && SPECIAL_NAMES[card.number];
     b.innerHTML =
       '<span class="corner"><span>' + card.number + '</span><span class="mini">' + GLYPHS[card.suit] + '</span></span>' +
       '<span class="glyph">' + GLYPHS[card.suit] + '</span>' +
       (special ? '<span class="tag ' + TAG_CLASS[card.number] + '">' + TAG_TEXT[card.number] + '</span>'
                : card.number === 20 ? '<span class="tag gold">Whot</span>' : '');
-    b.setAttribute('aria-label', (card.number === 20 ? 'Whot card' : card.suit + ' ' + card.number) + (legalIds.has(card.id) ? ', playable' : ''));
+    b.setAttribute('aria-label', (card.number === 20 ? 'Whot card' : card.suit + ' ' + card.number) + (hint && legalIds.has(card.id) ? ', playable' : ''));
     b.dataset.id = card.id;
     b.dataset.num = String(card.number);
     els.myHand.appendChild(b);
@@ -253,13 +277,111 @@ export function setOnline(on) {
   els.btnNew.textContent = on ? 'Leave room' : 'New game';
 }
 
+export function setRulesPill(rules) {
+  const text = rulePillText(rules);
+  if (!text) {
+    els.rulePill.classList.add('hidden');
+    return;
+  }
+  els.rulePill.textContent = text;
+  els.rulePill.classList.remove('hidden');
+}
+
+/* ---------- setup panel ---------- */
+
+function buildChips() {
+  els.ruleChoices.innerHTML = '';
+  RULE_CARDS.forEach(function (card) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.dataset.number = String(card.number);
+    b.textContent = card.number + ' ' + card.name;
+    b.addEventListener('click', function () {
+      const exclude = settings.rules.exclude.slice();
+      const at = exclude.indexOf(card.number);
+      if (at === -1) exclude.push(card.number);
+      else exclude.splice(at, 1);
+      settings.rules = normaliseRules({ exclude: exclude });
+      paintChips();
+      saveSettings();
+    });
+    els.ruleChoices.appendChild(b);
+  });
+  paintChips();
+}
+
+function paintChips() {
+  Array.prototype.forEach.call(els.ruleChoices.children, function (b) {
+    const off = settings.rules.exclude.indexOf(Number(b.dataset.number)) !== -1;
+    b.classList.toggle('off', off);
+    b.setAttribute('aria-pressed', String(!off));
+  });
+}
+
+function paintDifficulty() {
+  Array.prototype.forEach.call(els.difficulty.children, function (b) {
+    const on = (b.dataset.diff === 'strict') !== settings.hints;
+    b.classList.toggle('is-on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  els.diffHint.textContent = settings.hints
+    ? 'Guided glows the cards you can play.'
+    : 'Strict leaves every card the same. You work out what is playable.';
+}
+
+export function setHints(on) {
+  settings.hints = !!on;
+  paintDifficulty();
+  saveSettings();
+}
+
+/* ---------- defense on pick two and pick three ---------- */
+
+function buildDefend() {
+  els.defend.innerHTML = '';
+  DEFENDABLE.forEach(function (d) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'seg';
+    b.dataset.defend = String(d.number);
+    b.textContent = d.name;
+    b.addEventListener('click', function () {
+      setDefend(settings.rules.defend.indexOf(d.number) === -1, d.number);
+    });
+    els.defend.appendChild(b);
+  });
+  paintDefend();
+}
+
+function paintDefend() {
+  Array.prototype.forEach.call(els.defend.children, function (b) {
+    const on = settings.rules.defend.indexOf(Number(b.dataset.defend)) !== -1;
+    b.classList.toggle('is-on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  els.defendHint.textContent = settings.rules.defend.length === DEFENDABLE.length
+    ? 'On lets the next player throw the same number back.'
+    : 'Off: the next player pays instead of defending.';
+}
+
+export function setDefend(on, number) {
+  const defend = settings.rules.defend.slice();
+  const at = defend.indexOf(number);
+  if (on) { if (at === -1) defend.push(number); }
+  else if (at !== -1) defend.splice(at, 1);
+  settings.rules = normaliseRules({ exclude: settings.rules.exclude, defend: defend });
+  paintDefend();
+  saveSettings();
+}
+
 export function init(cb) {
   ['scoreYou', 'scoreFoe', 'foeName', 'foeCount', 'foeHand', 'think', 'marketCount', 'market',
    'discard', 'callPill', 'turnPill', 'log', 'prompt', 'myHand', 'suitModal', 'suitChoices',
    'roundModal', 'roundTitle', 'roundText', 'roundScores', 'btnNext', 'btnShare', 'rulesModal', 'toast',
    'btnRules', 'btnRulesClose', 'btnNew', 'lobbyModal', 'lobbyChoice', 'waiting', 'waitCode',
    'btnCreate', 'btnJoin', 'btnLocal', 'btnCancelWait', 'joinCode', 'joinName', 'lobbyMsg',
-   'roomPill', 'roomCodeTxt'].forEach(function (id) { els[id] = $(id); });
+   'roomPill', 'roomCodeTxt', 'rulePill', 'difficulty', 'diffHint', 'ruleChoices', 'defend', 'defendHint'].forEach(function (id) { els[id] = $(id); });
 
   els.market.addEventListener('click', function () { cb.onDraw(); });
   els.btnNew.addEventListener('click', function () { cb.onNew(); });
@@ -273,6 +395,14 @@ export function init(cb) {
   });
   els.btnLocal.addEventListener('click', function () { cb.onLocal(); });
   els.btnCancelWait.addEventListener('click', function () { cb.onCancelWait(); });
+
+  Array.prototype.forEach.call(els.difficulty.children, function (b) {
+    b.addEventListener('click', function () { setHints(b.dataset.diff === 'guided'); });
+  });
+
+  buildChips();
+  paintDifficulty();
+  buildDefend();
 
   els.myHand.addEventListener('click', function (e) {
     const btn = e.target.closest('button.card');

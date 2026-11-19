@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=setup1">
 </head>
 <body>
   <div class="app">
@@ -25,6 +25,7 @@
         <div class="score"><span>Opponent</span><b id="scoreFoe">0</b></div>
       </div>
       <div id="roomPill" class="pill room hidden" title="Room code"><span id="roomCodeTxt">------</span></div>
+      <div id="rulePill" class="pill rules-pill hidden"></div>
       <div class="top-actions">
         <button id="btnRules" class="btn ghost" type="button">Rules</button>
         <button id="btnNew" class="btn" type="button">New game</button>
@@ -71,10 +72,30 @@
     </footer>
   </div>
 
-  <div id="lobbyModal" class="overlay" role="dialog" aria-modal="true" aria-label="Play online">
+  <div id="lobbyModal" class="overlay" role="dialog" aria-modal="true" aria-label="Start a game">
     <div class="panel">
-      <h2>Play online</h2>
-      <p class="muted">Realtime Whot with a friend. Create a room and share the code, or join one.</p>
+      <h2>Start a game</h2>
+      <p class="muted">Set the table first. Your choices are remembered on this device.</p>
+
+      <p class="setup-label" id="diffLabel">Difficulty</p>
+      <div id="difficulty" class="segmented" role="group" aria-labelledby="diffLabel">
+        <button type="button" class="seg" data-diff="guided" aria-pressed="true">Guided</button>
+        <button type="button" class="seg" data-diff="strict" aria-pressed="false">Strict</button>
+      </div>
+      <p id="diffHint" class="setup-note">Guided glows the cards you can play.</p>
+
+      <p class="setup-label" id="ruleLabel">Cards in play</p>
+      <div id="ruleChoices" class="chips" role="group" aria-labelledby="ruleLabel"></div>
+      <p class="setup-note">Turn a card off to leave it out of the deck. On a shared table the room creator's choice applies to both players.</p>
+
+      <p class="setup-label" id="defendLabel">Defense</p>
+      <div id="defend" class="segmented" role="group" aria-labelledby="defendLabel">
+        <button type="button" class="seg" data-defend="2">Defend 2</button>
+        <button type="button" class="seg" data-defend="5">Defend 5</button>
+      </div>
+      <p id="defendHint" class="setup-note">On lets the next player throw the same number back.</p>
+
+      <p class="setup-label">Play</p>
       <div id="lobbyChoice">
         <div class="field">
           <input id="joinName" type="text" maxlength="16" placeholder="Your name" autocomplete="nickname">

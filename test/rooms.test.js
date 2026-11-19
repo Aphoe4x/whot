@@ -60,6 +60,25 @@ console.log('room manager');
   const full = mgr.join(a.room.code, 'Eve');
   ok(full.error === 'Room is full', 'third join rejected: ' + (full.error || 'none'));
 
+  // House rules travel with the room, into the deal and out to both seats.
+  const ruled = mgr.create('Ada', { exclude: [5, 20] });
+  const ruledJoin = mgr.join(ruled.room.code, 'Bob');
+  ok(!ruledJoin.error, 'join on a ruled room works: ' + (ruledJoin.error || 'ok'));
+  eq(ruled.room.state.rules.exclude.join(','), '5,20', 'room keeps the creator\'s rules');
+  const ruledDeck = ruled.room.state.players[0].hand
+    .concat(ruled.room.state.players[1].hand, ruled.room.state.market, ruled.room.state.pile);
+  eq(ruledDeck.length, 44, 'ruled room deals from a 44 card deck');
+  ok(ruledDeck.every(function (c) { return c.number !== 5 && c.number !== 20; }),
+    'no 5s or Whot cards in a ruled room');
+  eq(viewFor(ruled.room.state, 0).rules.exclude.join(','), '5,20', 'rules reach seat 0');
+  eq(viewFor(ruled.room.state, 1).rules.exclude.join(','), '5,20', 'rules reach seat 1');
+
+  // The next round keeps the same rules.
+  ruled.room.state.phase = 'ended';
+  const rematch = mgr.nextRound(ruled.room);
+  ok(!rematch.error, 'nextRound works in a ruled room: ' + (rematch.error || 'ok'));
+  eq(ruled.room.state.rules.exclude.join(','), '5,20', 'next round keeps the rules');
+
   // Views: each seat sees its own hand, the opponent only as a count.
   const view0 = viewFor(a.room.state, 0);
   const view1 = viewFor(a.room.state, 1);
@@ -158,7 +177,7 @@ console.log('live server');
     const aState = once(a, 'state');
     const bState = once(b, 'state');
 
-    const created = await new Promise(function (res) { a.emit('create', 'Ada', res); });
+    const created = await new Promise(function (res) { a.emit('create', { name: 'Ada' }, res); });
     ok(created.ok && created.code, 'create acked with code: ' + JSON.stringify(created));
     const joined = await new Promise(function (res) {
       b.emit('join', { code: created.code, name: 'Tunde' }, res);

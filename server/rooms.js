@@ -1,6 +1,6 @@
 // Pure room and realtime game logic. No sockets, no DOM: the transport
 // (server/index.js) owns connections, this owns the game.
-import { createGame, applyAction } from '../js/engine.js';
+import { createGame, applyAction, normaliseRules } from '../js/engine.js';
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I, O, 0, 1
 
@@ -43,6 +43,7 @@ export function viewFor(state, mySeat) {
   return {
     players: players,
     scores: scores,
+    rules: state.rules,
     market: new Array(state.market.length).fill(null),
     pile: state.pile,
     callSuit: state.callSuit,
@@ -68,16 +69,23 @@ export function createRoomManager(opts) {
     room.state = createGame({
       rng: rng,
       players: room.players.map(function (p) { return { id: p.id, name: p.name, isAI: false }; }),
+      rules: room.rules,
     });
     return room.state;
   }
 
-  function create(name) {
+  function create(name, rules) {
     purge();
     let code = makeCode(rng);
     while (rooms.has(code)) code = makeCode(rng);
     const player = { id: makeToken(rng), name: cleanName(name, 'Player 1'), seat: 0, connected: true };
-    const room = { code: code, players: [player], state: null, createdAt: now() };
+    const room = {
+      code: code,
+      players: [player],
+      state: null,
+      rules: normaliseRules(rules),
+      createdAt: now(),
+    };
     rooms.set(code, room);
     return { room: room, player: player };
   }
@@ -121,6 +129,7 @@ export function createRoomManager(opts) {
       rng: rng,
       carryScores: state.scores,
       players: room.players.map(function (p) { return { id: p.id, name: p.name, isAI: false }; }),
+      rules: room.rules,
     });
     return {};
   }

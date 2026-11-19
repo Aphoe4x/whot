@@ -119,8 +119,9 @@ export function startServer(opts) {
   }
 
   io.on('connection', function (socket) {
-    socket.on('create', function (name, ack) {
-      const made = manager.create(name);
+    socket.on('create', function (payload, ack) {
+      const body = payload || {};
+      const made = manager.create(body.name, body.rules);
       bind(socket, made.room, made.player);
       reply(ack, { ok: true, code: made.room.code, playerId: made.player.id, seat: made.player.seat });
     });

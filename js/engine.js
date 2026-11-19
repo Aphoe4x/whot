@@ -22,6 +22,66 @@ export const SPECIAL_NAMES = {
 
 const EFFECT_NUMBERS = new Set([1, 2, 5, 8, 14, 20]);
 
+// House rules: the special cards a table can leave out of the deck.
+export const RULE_CARDS = [
+  { number: 1, name: 'Hold on' },
+  { number: 2, name: 'Pick two' },
+  { number: 5, name: 'Pick three' },
+  { number: 8, name: 'Suspension' },
+  { number: 14, name: 'General market' },
+  { number: 20, name: 'Whot' },
+];
+
+// Defense: the numbers that can push back on Pick two / Pick three.
+export const DEFENDABLE = [
+  { number: 2, name: 'Pick two' },
+  { number: 5, name: 'Pick three' },
+];
+
+// House rules = { exclude: [5, 20], defend: [2, 5] }. Unknown numbers are
+// dropped, so a client cannot ask for a card or a rule the engine doesn't know.
+export function normaliseRules(rules) {
+  const asked = (rules && rules.exclude) || [];
+  const exclude = [];
+  RULE_CARDS.forEach(function (r) {
+    if (asked.indexOf(r.number) !== -1 && exclude.indexOf(r.number) === -1) exclude.push(r.number);
+  });
+  const defendAsked = (rules && rules.defend) || null;
+  const defend = DEFENDABLE.filter(function (d) {
+    return defendAsked ? defendAsked.indexOf(d.number) !== -1 : true;
+  }).map(function (d) { return d.number; });
+  return { exclude: exclude, defend: defend };
+}
+
+// Plain English for the log and the rules modal.
+export function ruleText(rules) {
+  const parts = [];
+  const names = leftOut(rules);
+  if (names.length) parts.push('Left out: ' + names.join(', ') + '.');
+  const noDefend = leftOutDefend(rules);
+  if (noDefend.length) parts.push('No defense on ' + noDefend.join(', ') + '.');
+  return parts.join(' ');
+}
+
+// Short form for the pill in the top bar: "No 5, no 20".
+export function rulePillText(rules) {
+  const nums = leftOut(rules).map(function (n) { return n.split(' ')[0]; });
+  if (!nums.length) return '';
+  return 'No ' + nums.join(', no ');
+}
+
+function leftOut(rules) {
+  const exclude = (rules && rules.exclude) || [];
+  return RULE_CARDS.filter(function (r) { return exclude.indexOf(r.number) !== -1; })
+    .map(function (r) { return r.number + ' ' + r.name; });
+}
+
+function leftOutDefend(rules) {
+  if (!rules || rules.defend == null) return [];
+  return DEFENDABLE.filter(function (d) { return rules.defend.indexOf(d.number) === -1; })
+    .map(function (d) { return d.name; });
+}
+
 export function shuffle(arr, rng) {
   rng = rng || Math.random;
   for (let i = arr.length - 1; i > 0; i--) {
@@ -34,12 +94,20 @@ export function shuffle(arr, rng) {
 }
 
 // 54 cards: circles 12, triangles 12, crosses 9, squares 9, stars 7, Whot 5. No 6s or 9s.
-export function buildDeck(rng) {
+// House rules drop whole numbers out of the deck before the shuffle.
+export function buildDeck(rng, rules) {
+  const exclude = new Set(normaliseRules(rules).exclude);
   const deck = [];
   for (const suit of SUITS) {
-    for (const n of SUIT_NUMBERS[suit]) deck.push({ id: suit + '-' + n, suit: suit, number: n });
+    for (const n of SUIT_NUMBERS[suit]) {
+      if (exclude.has(n)) continue;
+      deck.push({ id: suit + '-' + n, suit: suit, number: n });
+    }
   }
-  for (let i = 1; i <= 5; i++) deck.push({ id: 'whot-' + i, suit: 'whot', number: 20 });
+  for (let i = 1; i <= 5; i++) {
+    if (exclude.has(20)) continue;
+    deck.push({ id: 'whot-' + i, suit: 'whot', number: 20 });
+  }
   return shuffle(deck, rng);
 }
 
@@ -66,7 +134,10 @@ export function handValue(hand) {
 export function legalCards(state, idx) {
   const hand = state.players[idx].hand;
   if (state.pending && state.pending.player === idx) {
-    // Facing a pick two / pick three: only same-number defense cards are allowed.
+    // Facing a pick two / pick three: only same-number defense cards are
+    // allowed, and only when the table allows defending at all.
+    const defendOn = !state.rules || state.rules.defend.indexOf(state.pending.number) !== -1;
+    if (!defendOn) return [];
     return hand.filter(function (c) { return c.number === state.pending.number; });
   }
   const top = topOf(state);
@@ -123,8 +194,10 @@ export function createGame(opts) {
     { id: 'ai', name: 'Opponent', isAI: true },
   ];
   const handSize = opts.handSize == null ? 6 : opts.handSize;
+  const rules = normaliseRules(opts.rules);
   const state = {
     players: players.map(function (p) { return { id: p.id, name: p.name, isAI: !!p.isAI, hand: [] }; }),
+    rules: rules,
     market: [],
     pile: [],
     callSuit: null,
@@ -137,7 +210,7 @@ export function createGame(opts) {
     rng: rng,
   };
 
-  const deck = buildDeck(rng);
+  const deck = buildDeck(rng, rules);
   for (let r = 0; r < handSize; r++) {
     for (const p of state.players) p.hand.push(deck.pop());
   }

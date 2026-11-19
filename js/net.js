@@ -75,7 +75,7 @@ function wrap(socket) {
   });
 
   return {
-    create: function (name) { return request('create', name); },
+    create: function (name, rules) { return request('create', { name: name, rules: rules }); },
     join: function (code, name) { return request('join', { code: code, name: name }); },
     resume: function (code, playerId) { return request('resume', { code: code, playerId: playerId }); },
     action: function (action) { return request('action', action); },

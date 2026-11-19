@@ -53,21 +53,21 @@ export function normaliseRules(rules) {
   return { exclude: exclude, defend: defend };
 }
 
-// Plain English for the log and the rules modal.
+// Plain English for the log.
 export function ruleText(rules) {
   const parts = [];
   const names = leftOut(rules);
-  if (names.length) parts.push('Left out: ' + names.join(', ') + '.');
+  if (names.length) parts.push('Left out of the game: ' + names.join(', ') + '.');
   const noDefend = leftOutDefend(rules);
-  if (noDefend.length) parts.push('No defense on ' + noDefend.join(', ') + '.');
+  if (noDefend.length) parts.push('Defense is off on ' + noDefend.join(', ') + '.');
   return parts.join(' ');
 }
 
-// Short form for the pill in the top bar: "No 5, no 20".
+// Short form for the pill in the top bar: "No 5 or 20".
 export function rulePillText(rules) {
   const nums = leftOut(rules).map(function (n) { return n.split(' ')[0]; });
   if (!nums.length) return '';
-  return 'No ' + nums.join(', no ');
+  return 'No ' + nums.join(' or ');
 }
 
 function leftOut(rules) {

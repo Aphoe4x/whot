@@ -82,10 +82,10 @@ console.log('house rules');
   eq(plain.rules.exclude.length, 0, 'rules default to everything in play');
   eq(totalCards(plain), 54, 'plain game still deals 54');
 
-  eq(ruleText({ exclude: [5, 20], defend: [2, 5] }), 'Left out: 5 Pick three, 20 Whot.', 'rule text lists the cards');
-  eq(ruleText({ defend: [] }), 'No defense on Pick two, Pick three.', 'rule text mentions no defense when off');
+  eq(ruleText({ exclude: [5, 20], defend: [2, 5] }), 'Left out of the game: 5 Pick three, 20 Whot.', 'rule text lists the cards');
+  eq(ruleText({ defend: [] }), 'Defense is off on Pick two, Pick three.', 'rule text mentions defense off when it is off');
   eq(ruleText({}), '', 'rule text is empty when nothing is left out');
-  eq(rulePillText({ exclude: [5, 20] }), 'No 5, no 20', 'pill text is short');
+  eq(rulePillText({ exclude: [5, 20] }), 'No 5 or 20', 'pill text is short');
   eq(rulePillText({ exclude: [] }), '', 'pill hidden when nothing is left out');
 }
 

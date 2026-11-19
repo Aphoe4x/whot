@@ -100,7 +100,7 @@ export function render(state, ctx) {
     els.turnPill.className = 'pill turn-foe';
   } else {
     els.turnPill.textContent = state.pending
-      ? (state.rules && state.rules.defend.indexOf(state.pending.number) !== -1 ? 'Defend or pay' : 'Pay')
+      ? (state.rules && state.rules.defend.indexOf(state.pending.number) !== -1 ? 'Push back or pay' : 'Pay')
       : 'Your turn';
     els.turnPill.className = 'pill turn-your';
   }
@@ -113,7 +113,7 @@ export function render(state, ctx) {
     els.prompt.innerHTML =
       '<span>' + state.players[1].name + ' played <b>' + who + '</b>.</span>' +
       '<button class="btn" type="button" id="btnPay">' + (canDefend
-        ? 'Defend with a ' + state.pending.number + ' or pay ' + state.pending.amount
+        ? 'Push back or pay ' + state.pending.amount
         : 'Pay ' + state.pending.amount) + '</button>';
     const pay = $('btnPay');
     if (pay && ctx.onPay) pay.addEventListener('click', ctx.onPay);
@@ -326,8 +326,8 @@ function paintDifficulty() {
     b.setAttribute('aria-pressed', String(on));
   });
   els.diffHint.textContent = settings.hints
-    ? 'Guided glows the cards you can play.'
-    : 'Strict leaves every card the same. You work out what is playable.';
+    ? 'Cards glow when you can play them.'
+    : 'No glow: every card looks the same, and you work out the playable ones.';
 }
 
 export function setHints(on) {
@@ -345,7 +345,7 @@ function buildDefend() {
     b.type = 'button';
     b.className = 'seg';
     b.dataset.defend = String(d.number);
-    b.textContent = d.name;
+    b.textContent = 'Push back on ' + d.name;
     b.addEventListener('click', function () {
       setDefend(settings.rules.defend.indexOf(d.number) === -1, d.number);
     });
@@ -361,8 +361,8 @@ function paintDefend() {
     b.setAttribute('aria-pressed', String(on));
   });
   els.defendHint.textContent = settings.rules.defend.length === DEFENDABLE.length
-    ? 'On lets the next player throw the same number back.'
-    : 'Off: the next player pays instead of defending.';
+    ? 'On: the next player can throw the same card back.'
+    : 'Off: the next player has to pay the pick instead.';
 }
 
 export function setDefend(on, number) {

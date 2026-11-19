@@ -79,21 +79,21 @@
 
       <p class="setup-label" id="diffLabel">Difficulty</p>
       <div id="difficulty" class="segmented" role="group" aria-labelledby="diffLabel">
-        <button type="button" class="seg" data-diff="guided" aria-pressed="true">Guided</button>
-        <button type="button" class="seg" data-diff="strict" aria-pressed="false">Strict</button>
+        <button type="button" class="seg" data-diff="guided" aria-pressed="true">Cards glow</button>
+        <button type="button" class="seg" data-diff="strict" aria-pressed="false">No glow</button>
       </div>
-      <p id="diffHint" class="setup-note">Guided glows the cards you can play.</p>
+      <p id="diffHint" class="setup-note">Cards glow when you can play them.</p>
 
-      <p class="setup-label" id="ruleLabel">Cards in play</p>
+      <p class="setup-label" id="ruleLabel">Leave out of the game</p>
       <div id="ruleChoices" class="chips" role="group" aria-labelledby="ruleLabel"></div>
-      <p class="setup-note">Turn a card off to leave it out of the deck. On a shared table the room creator's choice applies to both players.</p>
+      <p class="setup-note">Turn a card off to leave it out of the game. When you play online, the room creator chooses the cards.</p>
 
-      <p class="setup-label" id="defendLabel">Defense</p>
+      <p class="setup-label" id="defendLabel">Push back on picks</p>
       <div id="defend" class="segmented" role="group" aria-labelledby="defendLabel">
-        <button type="button" class="seg" data-defend="2">Defend 2</button>
-        <button type="button" class="seg" data-defend="5">Defend 5</button>
+        <button type="button" class="seg" data-defend="2" aria-pressed="true">Push back on Pick two</button>
+        <button type="button" class="seg" data-defend="5" aria-pressed="true">Push back on Pick three</button>
       </div>
-      <p id="defendHint" class="setup-note">On lets the next player throw the same number back.</p>
+      <p id="defendHint" class="setup-note">On: the next player can throw the same card back. Off: they have to pay the pick instead.</p>
 
       <p class="setup-label">Play</p>
       <div id="lobbyChoice">

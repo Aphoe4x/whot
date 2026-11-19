@@ -2,7 +2,7 @@
 
 Play **Nigerian Whot** in the browser. The classic 54 card game with Hold on, Pick two, Suspension, General market and the wild Whot card.
 
-**Live:** https://aphoe4x.github.io/whot/ (single player + multiplayer via https://whot-okjn.onrender.com)
+**Live:** https://aphoe4x.github.io/whot/ and https://naija-whot.start.ng/ (rooms via https://whot-okjn.onrender.com)
 
 ## The rules
 

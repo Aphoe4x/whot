@@ -22,6 +22,20 @@ Play **Nigerian Whot** in the browser. The classic 54 card game with Hold on, Pi
 
 When the market runs out, everything under the call card is shuffled into a new market. First to empty their hand wins the round; everyone else scores their cards into the pot (stars count double, Whot counts 20).
 
+## House rules
+
+Before a game starts, the setup panel lets you set the table. The choices
+are remembered on the device, and the room creator sends them to everyone
+in the room.
+
+- **Difficulty**: Guided glows the cards you can play, Strict leaves
+  every card the same. Strict works the same in a room as against the AI.
+- **Cards in play**: turn a special card off, such as **5 Pick three** or
+  **20 Whot**, to leave it out of the deck. Once off, the card is not in
+  play for either player.
+- **Defense**: turn Pick two or Pick three off and the next player must pay
+  instead of being able to throw the same number back.
+
 ## Phases
 
 1. **Rules + board**: pure rules engine, playable table against a simple AI. Shipped.
